@@ -1,0 +1,126 @@
+#!/bin/bash
+
+
+
+
+
+#Constants
+readonly 	ARGS_NBR=1
+readonly 	THIS_JOB=${0##*/}
+
+
+# Variables
+declare		file_in
+declare     mode
+
+
+# Functions.
+function chk_abnd()
+{
+  local     abnd
+  
+  abnd=$1
+  date
+  if [ $abnd -ne 0 ]; then
+    echo "Failed with status " $abnd; echo
+    #rm +++++++++++++
+    exit $abnd
+    #return $abnd
+  else
+    echo "Done"; echo
+  fi
+}
+
+function chk_args()
+{
+  local        nbr_args=$1
+  
+  if [ $nbr_args -ne $ARGS_NBR ]; then
+      echo "Wrong number of parameters = " $nbr_args
+      exit 69
+  else
+	 echo "User has supplied the correct number of arguments"
+     return 0
+  fi
+}
+
+
+
+function assignvars()
+{
+	file_in=$1
+	echo "Provided file" $file_in
+
+}
+
+
+
+##################################################################
+# Script Start
+echo $THIS_JOB " started at " `date`; echo
+
+echo "Checking number of arguments"
+chk_args $#
+
+echo "Assigning parameters"
+assignvars $1
+
+
+##################################################
+#  Parsing input filename
+echo "Parsing filename to produce childs"
+file_name=`echo "$file_in" | cut -d'.' -f1`
+chk_abnd $?
+file_extension=`echo "$file_in" | cut -d'.' -f2`
+chk_abnd $?
+#echo $file_name
+#echo $file_extension
+
+
+##################################################
+# Check if file in exists or terminate
+if [ ! -f $file_in ]; then
+    echo "Error: File not found!"
+	exit 1
+fi
+
+
+##################################################
+# create backup copy of file in 
+cp $file_in $file_in".bak"
+chk_abnd $?
+
+
+
+##################################################
+# run python script
+BNsplitcalc.py $file_in > "BNsplitcalc.out"
+chk_abnd $?
+
+
+
+##################################################
+# remove original file
+rm $file_in
+chk_abnd $?
+
+
+##################################################
+# Copy produced files into desirable file names
+cp $file_in".out.0.txt" $file_in
+chk_abnd $?
+cp $file_in".out.1.txt" $file_name".002"
+chk_abnd $?
+
+
+
+##################################################
+# Clean up old produced files.
+rm $file_in".out.0.txt"
+chk_abnd $?
+rm $file_in".out.1.txt"
+chk_abnd $?
+
+
+##################################################
+echo $COBLINX_EXP2SAP"BN"$BTCH_DATE_m1".001" "was processed"
